@@ -29,27 +29,34 @@ jobs:
       - name: Extrair conteúdo do zip (se o arquivo existir)
         if: steps.check_zip_file.outputs.file_exists == 'true'
         run: |
-          # Instala o utilitário 'unzip' caso não esteja presente (geralmente já está no Ubuntu)
           sudo apt-get update && sudo apt-get install -y unzip
+          unzip -o "download (1).zip" -d . # Extrai para a raiz do workspace
 
-          # Descompacta o arquivo zip
-          # -o: sobrescreve arquivos existentes sem pedir confirmação
-          # -d: especifica o diretório de destino. Vamos extrair na raiz do workspace.
-          unzip -o "download (1).zip" -d .
-
-          # Move o conteúdo da pasta ESTATICO para a raiz do repositório (opcional, dependendo do seu uso)
-          # Se você quiser que o conteúdo de ESTATICO vá para a raiz do seu site ou outro lugar
-          # ajuste esta linha. Aqui, ele move o conteúdo para 'output_estatico'.
+          # Mover o conteúdo de ESTATICO para uma pasta específica para o commit
           if [ -d "ESTATICO" ]; then
-            mkdir -p output_estatico
-            mv ESTATICO/* output_estatico/
-            echo "Conteúdo da pasta ESTATICO extraído para output_estatico/"
-            ls -R output_estatico/ # Lista o conteúdo para verificar
+            mkdir -p extracted_files # Cria uma pasta para os arquivos que serão versionados
+            mv ESTATICO/* extracted_files/ # Move o conteúdo para essa nova pasta
+            echo "Conteúdo da pasta ESTATICO extraído para extracted_files/"
+            ls -R extracted_files/ # Lista o conteúdo para verificar
           else
             echo "Pasta ESTATICO não encontrada dentro do zip após extração."
+            exit 1 # Sai com erro se ESTATICO não for encontrado, para evitar um commit vazio
           fi
 
-      - name: Listar arquivos extraídos (para depuração)
+      - name: Configurar Git para o Commit
         run: |
-          echo "Conteúdo do diretório de trabalho após a extração:"
-          ls -R .
+          git config user.name github-actions[bot]
+          git config user.email github-actions[bot]@users.noreply.github.com
+
+      - name: Adicionar, Commitar e Enviar os Arquivos Extraídos
+        run: |
+          # Adiciona a pasta com os arquivos extraídos
+          git add extracted_files/
+
+          # Verifica se há algo para commitar antes de fazer o commit
+          git diff --quiet --exit-code || git commit -m "feat: Adiciona arquivos extraídos de download (1).zip [skip ci]"
+
+          # Faz o push para o branch atual
+          # O '[skip ci]' no commit message evita que este push acione um novo workflow,
+          # o que poderia criar um loop infinito.
+          git push
