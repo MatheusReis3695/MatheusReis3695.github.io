@@ -1,0 +1,55 @@
+name: Extrair ESTATICO de download (1).zip
+
+on:
+  workflow_dispatch: # Permite acionar o workflow manualmente
+  push:
+    branches:
+      - main # Ou o branch principal do seu repositório (ex: master)
+    paths:
+      - 'download (1).zip' # Aciona se o arquivo zip for alterado
+
+jobs:
+  extract-zip-content:
+    runs-on: ubuntu-latest # Usa um runner Ubuntu
+
+    steps:
+      - name: Checkout do Repositório
+        uses: actions/checkout@v4 # Clona o repositório para o runner
+
+      - name: Verificar se o arquivo zip existe
+        id: check_zip_file
+        run: |
+          if [ -f "download (1).zip" ]; then
+            echo "::set-output name=file_exists::true"
+          else
+            echo "::set-output name=file_exists::false"
+            echo "Arquivo download (1).zip não encontrado na raiz do repositório."
+          fi
+
+      - name: Extrair conteúdo do zip (se o arquivo existir)
+        if: steps.check_zip_file.outputs.file_exists == 'true'
+        run: |
+          # Instala o utilitário 'unzip' caso não esteja presente (geralmente já está no Ubuntu)
+          sudo apt-get update && sudo apt-get install -y unzip
+
+          # Descompacta o arquivo zip
+          # -o: sobrescreve arquivos existentes sem pedir confirmação
+          # -d: especifica o diretório de destino. Vamos extrair na raiz do workspace.
+          unzip -o "download (1).zip" -d .
+
+          # Move o conteúdo da pasta ESTATICO para a raiz do repositório (opcional, dependendo do seu uso)
+          # Se você quiser que o conteúdo de ESTATICO vá para a raiz do seu site ou outro lugar
+          # ajuste esta linha. Aqui, ele move o conteúdo para 'output_estatico'.
+          if [ -d "ESTATICO" ]; then
+            mkdir -p output_estatico
+            mv ESTATICO/* output_estatico/
+            echo "Conteúdo da pasta ESTATICO extraído para output_estatico/"
+            ls -R output_estatico/ # Lista o conteúdo para verificar
+          else
+            echo "Pasta ESTATICO não encontrada dentro do zip após extração."
+          fi
+
+      - name: Listar arquivos extraídos (para depuração)
+        run: |
+          echo "Conteúdo do diretório de trabalho após a extração:"
+          ls -R .
