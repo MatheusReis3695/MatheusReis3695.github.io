@@ -1,0 +1,21 @@
+{
+  "name": "SCALP PRO",
+  "short_name": "SCALP PRO",
+  "description": "Plataforma de trading profissional com análise de IA.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#030712",
+  "theme_color": "#111827",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
