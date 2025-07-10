@@ -39,16 +39,27 @@ jobs:
           ls -lA .
           echo "---"
 
-          # Verifica se a pasta ESTATICO existe e move seu conteúdo
           if [ -d "ESTATICO" ]; then
             mkdir -p extracted_files
-            # **** MUDANÇA AQUI: mv ESTATICO/* para mv ESTATICO/. ****
-            # Isso move o *conteúdo* de ESTATICO para extracted_files
-            mv ESTATICO/. extracted_files/
+
+            # **** MUDANÇA PRINCIPAL AQUI: Use dois comandos mv ****
+            # Move todos os arquivos e pastas visíveis de ESTATICO para extracted_files
+            mv ESTATICO/* extracted_files/ 2>/dev/null || true
+
+            # Move todos os arquivos ocultos (e pastas ocultas) de ESTATICO para extracted_files
+            # Exclui '.' e '..' para evitar problemas com recursão ou movimentação inválida
+            shopt -s dotglob # Habilita a correspondência de arquivos ocultos
+            mv ESTATICO/.* extracted_files/ 2>/dev/null || true
+            shopt -u dotglob # Desabilita a correspondência de arquivos ocultos
+
             echo "Conteúdo da pasta ESTATICO extraído para extracted_files/"
             echo "Listando conteúdo de extracted_files:"
             ls -R extracted_files/
             echo "---"
+            
+            # Opcional: Remover a pasta ESTATICO vazia após mover seu conteúdo
+            rmdir ESTATICO 2>/dev/null || true
+
           else
             echo "ERRO: Pasta ESTATICO não encontrada dentro do zip após extração."
             exit 1 # Sai com erro
